@@ -38,9 +38,6 @@ public class AuthService {
         this.refreshTokenRedisRepository = refreshTokenRedisRepository;
     }
 
-    /**
-     * ✅ 로그인
-     */
     public LoginResponse login(LoginRequest request) {
 
         User user = userRepository.findByUserId(request.getUserId())
@@ -67,7 +64,6 @@ public class AuthService {
         long refreshTtlSeconds = 60 * 60 * 24 * 7L; // 7일
         refreshTokenRedisRepository.save(refreshToken, user.getUserId(), refreshTtlSeconds);
 
-        // ✅ Access TTL은 JwtProvider에서 가져오기
         int accessTtlSeconds = jwtProvider.getAccessExpireSeconds();
 
         // 4️⃣ 응답
@@ -80,13 +76,6 @@ public class AuthService {
         );
     }
 
-
-    /**
-     * ✅ Refresh → Access 재발급
-     */
-    /**
-     * ✅ Refresh → AccessToken 재발급 (RefreshToken 고정)
-     */
     public TokenRefreshResponse refresh(String oldRefreshToken) {
 
         // 1️⃣ 기존 RefreshToken으로 사용자 조회
@@ -108,22 +97,20 @@ public class AuthService {
             throw new RuntimeException("RefreshToken 만료");
         }
 
-        // ✅ RefreshToken 그대로 유지
+        // RefreshToken 그대로 유지 (RTR 방식 미적용)
         return new TokenRefreshResponse(
                 newAccessToken,
                 oldRefreshToken,
-                ttl.intValue()  // 기존 TTL 그대로 전달
+                ttl.intValue()
         );
     }
 
-    /**
-     * ✅ 남은 TTL 조회
-     */
     public int getRemainingSeconds(String userId) {
         Long ttl = refreshTokenRedisRepository.getTtl(userId);
         if (ttl == null || ttl < 0) return 0;
         return ttl.intValue();
     }
+
     public int getRemainingSecondsByRefreshToken(String refreshToken) {
         String userId = refreshTokenRedisRepository.findUserIdByRefreshToken(refreshToken);
         if (userId == null) return 0;
@@ -131,10 +118,21 @@ public class AuthService {
         if (ttl == null || ttl < 0) return 0;
         return ttl.intValue();
     }
-    /**
-     * ✅ 로그아웃
-     */
+
     public void logout(String userId) {
         refreshTokenRedisRepository.deleteByUserId(userId);
+    }
+
+    /**
+     * [리팩토링] logoutByRefreshToken 메서드 추가
+     * - 기존 문제: AuthController에서 logout(refreshToken)을 호출했는데
+     *              기존 logout()은 userId를 받는 메서드 → Redis 삭제 실패
+     * - 해결: refreshToken → R2U:{refreshToken} 으로 userId 역조회 후 삭제
+     */
+    public void logoutByRefreshToken(String refreshToken) {
+        String userId = refreshTokenRedisRepository.findUserIdByRefreshToken(refreshToken);
+        if (userId != null) {
+            refreshTokenRedisRepository.deleteByUserId(userId);
+        }
     }
 }

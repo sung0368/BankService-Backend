@@ -1,39 +1,43 @@
 package com.bankservice.account;
 
-import com.bankservice.user.User;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import java.math.BigDecimal;
-
+import java.time.LocalDateTime;
 @Entity
 @Table(name = "계좌")
+@Getter @Setter
+@NoArgsConstructor
 public class Account {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "사용자_id")
-    private User user;
-
-    @Column(name = "계좌번호", nullable = false)
+    @Column(name = "계좌번호", nullable = false, unique = true)
     private String accountNumber;
 
     @Column(name = "잔액", nullable = false)
-    private BigDecimal balance;
+    private Long balance = 0L;
 
-    protected Account() {}
+    @Column(name = "사용자_id", nullable = false)
+    private String userId;
 
-    public Long getId() {
-        return id;
-    }
+    @Column(name = "상품", nullable = false)
+    private String product = "입출금계좌";
 
-    public String getAccountNumber() {
-        return accountNumber;
-    }
+    @Column(name = "상태", nullable = false)
+    private String status = "NORMAL";
 
-    public BigDecimal getBalance() {
-        return balance;
-    }
+    @Version
+    @Column(name = "버전", nullable = false)
+    private Integer version = 0;
+
+    @Column(name = "생성일시")
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(name = "해지일시")
+    private LocalDateTime closedAt;
 }
