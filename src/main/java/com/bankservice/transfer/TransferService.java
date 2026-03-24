@@ -1,9 +1,8 @@
 package com.bankservice.transfer;
 
 import com.bankservice.account.Account;
-import com.bankservice.account.AccountAuth;
-import com.bankservice.account.AccountAuthRepository;
 import com.bankservice.account.AccountRepository;
+import com.bankservice.account.PinVerifier;
 import com.bankservice.user.UserProfile;
 import com.bankservice.user.UserProfileRepository;
 import jakarta.transaction.Transactional;
@@ -29,11 +28,10 @@ public class TransferService {
     private static final DateTimeFormatter DATETIME_FORMAT = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss");
 
     private final AccountRepository accountRepository;
-    private final AccountAuthRepository accountAuthRepository;
     private final TransactionRepository transactionRepository;
     private final AccountHistoryRepository accountHistoryRepository;
     private final UserProfileRepository userProfileRepository;
-    private final BCryptPasswordEncoder encoder;
+    private final PinVerifier pinVerifier;
 
     public Transaction transfer(String userId, String fromAccountNumber, String toAccountNumber, Long amount, String pin) {
 
@@ -45,13 +43,8 @@ public class TransferService {
             throw new RuntimeException("해지된 계좌에서는 이체할 수 없습니다.");
         }
 
-        // 2. 계좌 비밀번호 검증
-        AccountAuth auth = accountAuthRepository.findById(fromAccount.getId())
-                .orElseThrow(() -> new RuntimeException("계좌 인증 정보를 찾을 수 없습니다."));
-
-        if (!encoder.matches(auth.getPinSalt() + pin, auth.getPinHash())) {
-            throw new RuntimeException("계좌 비밀번호가 올바르지 않습니다.");
-        }
+        // 2. 계좌 비밀번호 검증 (실패 횟수 제한 포함)
+        pinVerifier.verify(fromAccount.getId(), pin);
 
         // 3. 입금 계좌 확인
         Account toAccount = accountRepository.findByAccountNumber(toAccountNumber)
@@ -99,7 +92,7 @@ public class TransferService {
         return tx;
     }
 
-    // [리팩토링] 거래 내역 조회 기능 신규 추가
+    // 거래 내역 조회 기능 신규 추가
     public List<Map<String, String>> getHistory(String userId, String accountNumber, int year, int month) {
         Account account = accountRepository.findByAccountNumberAndUserId(accountNumber, userId)
                 .orElseThrow(() -> new RuntimeException("계좌를 찾을 수 없습니다."));

@@ -25,6 +25,7 @@ public class AccountService {
     private final BCryptPasswordEncoder encoder;
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
+    private final PinVerifier pinVerifier;
 
     /**
      * [리팩토링] 계좌 개설 시 계좌 비밀번호(PIN) 해싱 추가
@@ -62,9 +63,7 @@ public class AccountService {
         AccountAuth auth = accountAuthRepository.findById(account.getId())
                 .orElseThrow(() -> new RuntimeException("계좌 인증 정보를 찾을 수 없습니다."));
 
-        if (!encoder.matches(auth.getPinSalt() + currentPin, auth.getPinHash())) {
-            throw new RuntimeException("현재 비밀번호가 올바르지 않습니다.");
-        }
+        pinVerifier.verify(account.getId(), currentPin);
 
         String newSalt = UUID.randomUUID().toString();
         String newPinHash = encoder.encode(newSalt + newPin);
@@ -82,9 +81,7 @@ public class AccountService {
         AccountAuth auth = accountAuthRepository.findById(account.getId())
                 .orElseThrow(() -> new RuntimeException("계좌 인증 정보를 찾을 수 없습니다."));
 
-        if (!encoder.matches(auth.getPinSalt() + pin, auth.getPinHash())) {
-            throw new RuntimeException("비밀번호가 올바르지 않습니다.");
-        }
+        pinVerifier.verify(account.getId(), pin);
 
         account.setStatus("CLOSED");
         account.setClosedAt(LocalDateTime.now());

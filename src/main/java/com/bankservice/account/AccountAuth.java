@@ -70,8 +70,35 @@ public class AccountAuth {
         this.pinSalt = pinSalt;
     }
 
+    private static final int MAX_FAIL_COUNT = 5;
+    private static final int LOCK_MINUTES = 30;
+
+    // 잠금 여부 확인 (30분 경과 시 자동 해제)
+    public boolean isLocked() {
+        if (!"LOCKED".equals(this.status)) return false;
+        if (this.lastFailedAt == null) return false;
+        return LocalDateTime.now().isBefore(this.lastFailedAt.plusMinutes(LOCK_MINUTES));
+    }
+
+    // PIN 실패 처리: 횟수 증가, 5회 시 잠금
+    public void recordFailure() {
+        this.failCount++;
+        this.lastFailedAt = LocalDateTime.now();
+        if (this.failCount >= MAX_FAIL_COUNT) {
+            this.status = "LOCKED";
+        }
+    }
+
+    // PIN 성공 처리: 실패 횟수 초기화
+    public void recordSuccess() {
+        this.failCount = 0;
+        this.lastFailedAt = null;
+        this.status = "NORMAL";
+    }
+
     public void updatePin(String newPinHash, String newPinSalt) {
         this.pinHash = newPinHash;
         this.pinSalt = newPinSalt;
+        recordSuccess(); // 비밀번호 변경 시 잠금 해제
     }
 }
