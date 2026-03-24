@@ -1,11 +1,17 @@
 package com.bankservice.account;
 
+import com.bankservice.user.User;
+import com.bankservice.user.UserProfile;
+import com.bankservice.user.UserProfileRepository;
+import com.bankservice.user.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -16,6 +22,8 @@ public class AccountService {
     private final AccountRepository accountRepository;
     private final AccountAuthRepository accountAuthRepository;
     private final BCryptPasswordEncoder encoder;
+    private final UserRepository userRepository;
+    private final UserProfileRepository userProfileRepository;
 
     /**
      * [리팩토링] 계좌 개설 시 계좌 비밀번호(PIN) 해싱 추가
@@ -38,6 +46,32 @@ public class AccountService {
         String salt = UUID.randomUUID().toString();
         String pinHash = encoder.encode(salt + rawPin);
         accountAuthRepository.save(new AccountAuth(saved, pinHash, salt));
+    }
+
+    /**
+     * 본인인증: DB에 저장된 이름, 주민등록번호, 휴대폰번호와 입력값 비교
+     * 불일치 항목을 필드별 에러 메시지로 반환
+     */
+    public Map<String, String> verifyIdentity(String userId, String name, String ssn, String phone) {
+        Map<String, String> errors = new LinkedHashMap<>();
+
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("사용자 정보를 찾을 수 없습니다."));
+
+        UserProfile profile = userProfileRepository.findByUser(user)
+                .orElseThrow(() -> new RuntimeException("사용자 프로필 정보를 찾을 수 없습니다."));
+
+        if (!profile.getName().equals(name)) {
+            errors.put("name", "이름이 일치하지 않습니다.");
+        }
+        if (!profile.getResidentNumberEncrypted().equals(ssn)) {
+            errors.put("ssn", "주민등록번호가 일치하지 않습니다.");
+        }
+        if (!profile.getPhone().equals(phone)) {
+            errors.put("phone", "휴대폰번호가 일치하지 않습니다.");
+        }
+
+        return errors;
     }
 
     private String generateAccountNumber() {

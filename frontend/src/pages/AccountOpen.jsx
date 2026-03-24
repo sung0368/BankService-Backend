@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, NavLink } from 'react-router-dom'
-import { openAccount } from '../api/account'
+import { openAccount, verifyIdentity } from '../api/account'
 import Navbar from '../components/Navbar'
 
 const PRODUCTS = [
@@ -56,6 +56,8 @@ export default function AccountOpen() {
   const [pwError, setPwError] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [verified, setVerified] = useState(false)       // 본인인증 완료 여부
+  const [verifyErrors, setVerifyErrors] = useState({})   // 필드별 에러 메시지
   const navigate = useNavigate()
 
   /**
@@ -66,7 +68,33 @@ export default function AccountOpen() {
   const timerRef = useRef(null)
   useEffect(() => () => clearTimeout(timerRef.current), [])
 
-  const handleChange = (e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+  const handleChange = (e) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+    // 입력값이 바뀌면 인증 초기화 (정보 수정 후 재인증 필요)
+    if (['name', 'ssn', 'phone'].includes(e.target.name)) {
+      setVerified(false)
+      setVerifyErrors({})
+    }
+  }
+
+  const handleVerify = async () => {
+    setVerifyErrors({})
+    if (!form.name || !form.ssn || !form.phone) {
+      setVerifyErrors({ general: '이름, 주민등록번호, 휴대폰번호를 모두 입력해주세요.' })
+      return
+    }
+    try {
+      await verifyIdentity(form.name, form.ssn, form.phone)
+      setVerified(true)
+    } catch (err) {
+      const data = err.response?.data
+      if (data && typeof data === 'object') {
+        setVerifyErrors(data)
+      } else {
+        setVerifyErrors({ general: '본인인증에 실패했습니다.' })
+      }
+    }
+  }
 
   const handleSubmit = async (e) => {
     // 클라이언트 사이드 비밀번호 유효성 검사
@@ -172,23 +200,50 @@ export default function AccountOpen() {
 
                 <div style={s.formGroup}>
                   <label style={s.label}>이름</label>
-                  <input style={s.input} type="text" name="name" value={form.name} onChange={handleChange} required />
+                  <input
+                    style={{ ...s.input, borderColor: verifyErrors.name ? '#e53935' : '#ccc' }}
+                    type="text" name="name" value={form.name} onChange={handleChange} required
+                  />
+                  {verifyErrors.name && <p style={s.fieldError}>{verifyErrors.name}</p>}
                 </div>
                 <div style={s.formGroup}>
                   <label style={s.label}>주민등록번호</label>
-                  <input style={s.input} type="text" name="ssn" placeholder="예: 900101-1234567" value={form.ssn} onChange={handleChange} required />
+                  <input
+                    style={{ ...s.input, borderColor: verifyErrors.ssn ? '#e53935' : '#ccc' }}
+                    type="text" name="ssn" placeholder="예: 900101-1234567" value={form.ssn} onChange={handleChange} required
+                  />
+                  {verifyErrors.ssn && <p style={s.fieldError}>{verifyErrors.ssn}</p>}
                 </div>
                 <div style={s.formGroup}>
                   <label style={s.label}>휴대폰번호</label>
                   <div style={s.phoneBox}>
-                    <input style={{ ...s.input, flex: 1 }} type="text" name="phone" placeholder="010-0000-0000" value={form.phone} onChange={handleChange} required />
-                    <button type="button" style={s.verifyBtn}>본인확인</button>
+                    <input
+                      style={{ ...s.input, flex: 1, borderColor: verifyErrors.phone ? '#e53935' : '#ccc' }}
+                      type="text" name="phone" placeholder="010-0000-0000" value={form.phone} onChange={handleChange} required
+                    />
+                    <button
+                      type="button"
+                      style={{ ...s.verifyBtn, background: verified ? '#4caf50' : '#003366' }}
+                      onClick={handleVerify}
+                    >
+                      {verified ? '인증완료' : '본인확인'}
+                    </button>
                   </div>
+                  {verifyErrors.phone && <p style={s.fieldError}>{verifyErrors.phone}</p>}
                 </div>
+
+                {verifyErrors.general && <p style={s.error}>{verifyErrors.general}</p>}
+                {verified && <p style={s.success}>본인인증이 완료되었습니다.</p>}
 
                 <div style={s.rowButtons}>
                   <button style={s.noBtn} onClick={() => setStep(1)}>이전</button>
-                  <button style={s.yesBtn} onClick={() => setStep(3)}>다음</button>
+                  <button
+                    style={{ ...s.yesBtn, opacity: verified ? 1 : 0.5 }}
+                    disabled={!verified}
+                    onClick={() => setStep(3)}
+                  >
+                    다음
+                  </button>
                 </div>
               </>
             )}

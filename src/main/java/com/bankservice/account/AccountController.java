@@ -21,6 +21,29 @@ public class AccountController {
     private final AccountService accountService;
 
     /**
+     * 본인인증 API
+     * 입력된 이름, 주민등록번호, 휴대폰번호를 DB와 비교
+     * 일치하면 빈 객체, 불일치하면 필드별 에러 메시지 반환
+     */
+    @PostMapping("/verify-identity")
+    public ResponseEntity<Map<String, String>> verifyIdentity(
+            @RequestBody Map<String, String> body,
+            @AuthenticationPrincipal String userId) {
+
+        String name = body.get("name");
+        String ssn = body.get("ssn");
+        String phone = body.get("phone");
+
+        Map<String, String> errors = accountService.verifyIdentity(userId, name, ssn, phone);
+
+        if (!errors.isEmpty()) {
+            return ResponseEntity.badRequest().body(errors);
+        }
+
+        return ResponseEntity.ok(Map.of("message", "본인인증이 완료되었습니다."));
+    }
+
+    /**
      * [리팩토링] 계좌 개설 API
      * - 기존: 폼 데이터 받아서 뷰 리다이렉트
      * - 변경: JSON body에서 product, password 추출
