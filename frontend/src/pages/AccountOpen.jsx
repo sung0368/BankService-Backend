@@ -58,6 +58,7 @@ export default function AccountOpen() {
   const [error, setError] = useState('')
   const [verified, setVerified] = useState(false)       // 본인인증 완료 여부
   const [verifyErrors, setVerifyErrors] = useState({})   // 필드별 에러 메시지
+  const [result, setResult] = useState(null)             // 계좌 개설 완료 정보
   const navigate = useNavigate()
 
   /**
@@ -112,8 +113,7 @@ export default function AccountOpen() {
     setMessage('')
     try {
       const data = await openAccount(form.product, form.password)
-      setMessage(data.message)
-      timerRef.current = setTimeout(() => navigate('/home'), 1500)
+      setResult(data)
     } catch (err) {
       /**
        * [리팩토링] 에러 처리 개선
@@ -131,6 +131,46 @@ export default function AccountOpen() {
         setError(data?.message || '계좌 개설에 실패했습니다.')
       }
     }
+  }
+
+  // 계좌 개설 완료 화면
+  if (result) {
+    return (
+      <div style={s.wrap}>
+        <Navbar />
+        <div style={s.pageContainer}>
+          <div style={s.sidebar}>
+            <h3 style={s.sidebarTitle}>계좌 서비스</h3>
+            <NavLink to="/account/open" style={({ isActive }) => ({ ...s.sideLink, color: isActive ? '#003366' : '#333' })}>계좌 개설</NavLink>
+            <NavLink to="/account/lookup" style={({ isActive }) => ({ ...s.sideLink, color: isActive ? '#003366' : '#333' })}>계좌 조회</NavLink>
+            <NavLink to="/transfer" style={({ isActive }) => ({ ...s.sideLink, color: isActive ? '#003366' : '#333' })}>계좌 이체</NavLink>
+            <NavLink to="/account/history" style={({ isActive }) => ({ ...s.sideLink, color: isActive ? '#003366' : '#333' })}>거래 내역 조회</NavLink>
+          </div>
+          <div style={s.content}>
+            <div style={s.formContainer}>
+              <div style={s.successIcon}>✓</div>
+              <h2 style={s.successTitle}>계좌 개설 완료</h2>
+              <p style={s.successSubtitle}>계좌 개설이 성공적으로 완료되었습니다.</p>
+              <div style={s.resultBox}>
+                <div style={s.resultRow}>
+                  <span style={s.resultLabel}>상품명</span>
+                  <span style={s.resultValue}>{result.product}</span>
+                </div>
+                <div style={s.resultRow}>
+                  <span style={s.resultLabel}>계좌번호</span>
+                  <span style={s.resultValue}>{result.accountNumber}</span>
+                </div>
+                <div style={s.resultRow}>
+                  <span style={s.resultLabel}>발급일시</span>
+                  <span style={s.resultValue}>{result.createdAt}</span>
+                </div>
+              </div>
+              <button style={s.yesBtn} onClick={() => navigate('/home')}>홈으로 이동</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -372,6 +412,26 @@ const s = {
 
   formContainer: { maxWidth: '500px', margin: '0 auto', background: '#f7f7f7', padding: '30px', borderRadius: '6px' },
   formTitle: { textAlign: 'center', marginBottom: '24px' },
+
+  // 완료 화면
+  successIcon: {
+    width: '64px', height: '64px', borderRadius: '50%', background: '#4caf50',
+    color: 'white', fontSize: '32px', fontWeight: 'bold',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    margin: '0 auto 20px',
+  },
+  successTitle: { textAlign: 'center', color: '#003366', marginBottom: '8px' },
+  successSubtitle: { textAlign: 'center', color: '#555', marginBottom: '28px', fontSize: '14px' },
+  resultBox: {
+    background: 'white', border: '1px solid #ddd', borderRadius: '6px',
+    padding: '20px', marginBottom: '24px',
+  },
+  resultRow: {
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    padding: '12px 0', borderBottom: '1px solid #f0f0f0',
+  },
+  resultLabel: { color: '#888', fontSize: '14px' },
+  resultValue: { color: '#003366', fontWeight: 'bold', fontSize: '14px' },
   sectionTitle: { marginBottom: '16px', color: '#333' },
 
   termsBox: {

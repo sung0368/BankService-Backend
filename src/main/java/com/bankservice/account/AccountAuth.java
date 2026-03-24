@@ -69,4 +69,9 @@ public class AccountAuth {
         this.pinHash = pinHash;
         this.pinSalt = pinSalt;
     }
+
+    public void updatePin(String newPinHash, String newPinSalt) {
+        this.pinHash = newPinHash;
+        this.pinSalt = newPinSalt;
+    }
 }

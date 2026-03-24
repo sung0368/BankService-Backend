@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -35,7 +36,7 @@ public class AccountService {
      *   pinHash = BCrypt(salt + rawPin)   → salt를 붙여서 BCrypt 해싱
      *   → 같은 PIN이라도 계좌마다 다른 해시값이 저장됨 (레인보우 테이블 방어)
      */
-    public void openAccount(String userId, String product, String rawPin) {
+    public Account openAccount(String userId, String product, String rawPin) {
         Account account = new Account();
         account.setUserId(userId);
         account.setProduct(product);
@@ -46,6 +47,47 @@ public class AccountService {
         String salt = UUID.randomUUID().toString();
         String pinHash = encoder.encode(salt + rawPin);
         accountAuthRepository.save(new AccountAuth(saved, pinHash, salt));
+
+        return saved;
+    }
+
+    public List<Account> getAccounts(String userId) {
+        return accountRepository.findByUserIdAndStatusNotOrderByCreatedAtDesc(userId, "CLOSED");
+    }
+
+    public void changePin(String userId, String accountNumber, String currentPin, String newPin) {
+        Account account = accountRepository.findByAccountNumberAndUserId(accountNumber, userId)
+                .orElseThrow(() -> new RuntimeException("계좌를 찾을 수 없습니다."));
+
+        AccountAuth auth = accountAuthRepository.findById(account.getId())
+                .orElseThrow(() -> new RuntimeException("계좌 인증 정보를 찾을 수 없습니다."));
+
+        if (!encoder.matches(auth.getPinSalt() + currentPin, auth.getPinHash())) {
+            throw new RuntimeException("현재 비밀번호가 올바르지 않습니다.");
+        }
+
+        String newSalt = UUID.randomUUID().toString();
+        String newPinHash = encoder.encode(newSalt + newPin);
+        auth.updatePin(newPinHash, newSalt);
+    }
+
+    public void closeAccount(String userId, String accountNumber, String pin) {
+        Account account = accountRepository.findByAccountNumberAndUserId(accountNumber, userId)
+                .orElseThrow(() -> new RuntimeException("계좌를 찾을 수 없습니다."));
+
+        if ("CLOSED".equals(account.getStatus())) {
+            throw new RuntimeException("이미 해지된 계좌입니다.");
+        }
+
+        AccountAuth auth = accountAuthRepository.findById(account.getId())
+                .orElseThrow(() -> new RuntimeException("계좌 인증 정보를 찾을 수 없습니다."));
+
+        if (!encoder.matches(auth.getPinSalt() + pin, auth.getPinHash())) {
+            throw new RuntimeException("비밀번호가 올바르지 않습니다.");
+        }
+
+        account.setStatus("CLOSED");
+        account.setClosedAt(LocalDateTime.now());
     }
 
     /**

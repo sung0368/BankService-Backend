@@ -3,6 +3,8 @@ import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Home from './pages/Home'
 import AccountOpen from './pages/AccountOpen'
+import AccountLookup from './pages/AccountLookup'
+import Transfer from './pages/Transfer'
 import PrivateRoute from './components/PrivateRoute'
 
 export default function App() {
@@ -13,6 +15,8 @@ export default function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/home" element={<Home />} />
         <Route path="/account/open" element={<PrivateRoute><AccountOpen /></PrivateRoute>} />
+        <Route path="/account/lookup" element={<PrivateRoute><AccountLookup /></PrivateRoute>} />
+        <Route path="/transfer" element={<PrivateRoute><Transfer /></PrivateRoute>} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
