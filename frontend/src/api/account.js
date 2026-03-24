@@ -29,3 +29,13 @@ export const transfer = async (fromAccountNumber, toAccountNumber, amount, pin) 
   const res = await client.post('/transfer', { fromAccountNumber, toAccountNumber, amount: String(amount), pin })
   return res.data
 }
+
+export const getTransferHistory = async (accountNumber, year, month) => {
+  const res = await client.get('/transfer/history', { params: { accountNumber, year, month } })
+  return res.data
+}
+
+export const getTransferAllHistory = async () => {
+  const res = await client.get('/transfer/all-history')
+  return res.data
+}

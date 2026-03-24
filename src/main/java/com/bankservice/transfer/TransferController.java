@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 // [리팩토링] 계좌이체 API 신규 추가
@@ -55,5 +56,25 @@ public class TransferController {
                 "message", "이체가 완료되었습니다.",
                 "trackingId", tx.getTrackingId()
         ));
+    }
+
+    @GetMapping("/all-history")
+    public ResponseEntity<List<Map<String, String>>> getAllHistory(
+            @AuthenticationPrincipal String userId) {
+
+        List<Map<String, String>> history = transferService.getAllHistory(userId);
+        return ResponseEntity.ok(history);
+    }
+
+    // [리팩토링] 거래 내역 조회 API 신규 추가
+    @GetMapping("/history")
+    public ResponseEntity<List<Map<String, String>>> getHistory(
+            @RequestParam String accountNumber,
+            @RequestParam int year,
+            @RequestParam int month,
+            @AuthenticationPrincipal String userId) {
+
+        List<Map<String, String>> history = transferService.getHistory(userId, accountNumber, year, month);
+        return ResponseEntity.ok(history);
     }
 }
