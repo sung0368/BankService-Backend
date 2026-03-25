@@ -11,7 +11,8 @@ export const logout = async (refreshToken) => {
   localStorage.removeItem('accessToken')
   localStorage.removeItem('refreshToken')
   localStorage.removeItem('userName')
-  localStorage.removeItem('accessExpiresIn')
+  localStorage.removeItem('accessDuration')
+  localStorage.removeItem('accessExpiresAt')
 }
 
 export const signup = async (data) => {

@@ -260,6 +260,6 @@ const s = {
   footerLogo: { color: 'white', fontSize: '20px', fontWeight: '800', letterSpacing: '2px', marginBottom: '8px' },
   footerDesc: { color: '#888', fontSize: '13px' },
   footerLinks: { display: 'flex', gap: '24px' },
-  footerLink: { color: '#888', fontSize: '13px', cursor: 'pointer' },
+  footerLink: { color: '#888', fontSize: '13px', cgiursor: 'pointer' },
   footerBottom: { color: '#666', fontSize: '12px' },
 }

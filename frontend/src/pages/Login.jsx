@@ -23,7 +23,8 @@ export default function Login() {
       localStorage.setItem('accessToken', data.accessToken)
       localStorage.setItem('refreshToken', data.refreshToken)
       localStorage.setItem('userName', data.userName)
-      localStorage.setItem('accessExpiresIn', data.accessExpiresIn)
+      localStorage.setItem('accessDuration', String(data.accessExpiresIn))
+      localStorage.setItem('accessExpiresAt', String(Date.now() + data.accessExpiresIn * 1000))
       navigate('/home')
     } catch (err) {
       setError(err.response?.data?.message || '로그인에 실패했습니다.')

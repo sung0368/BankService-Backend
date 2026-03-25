@@ -20,13 +20,13 @@ export default function Navbar() {
   const timerRef = useRef(null)
 
   useEffect(() => {
-    const expiresIn = parseInt(localStorage.getItem('accessExpiresIn') || '0', 10)
-    if (!expiresIn || !userName) return
+    if (!userName) return
 
-    let remaining = expiresIn
     const timerEl = timerRef.current
 
     const tick = () => {
+      const expiresAt = parseInt(localStorage.getItem('accessExpiresAt') || '0', 10)
+      const remaining = Math.floor((expiresAt - Date.now()) / 1000)
       if (remaining <= 0) {
         if (timerEl) timerEl.innerText = '로그인이 만료되었습니다'
         handleLogout()
@@ -37,12 +37,10 @@ export default function Navbar() {
       if (timerEl) {
         timerEl.innerText = `로그인 유지시간 ${String(m).padStart(2, '0')}분 ${String(s).padStart(2, '0')}초`
       }
-      remaining--
     }
 
     tick()
     const interval = setInterval(tick, 1000)
-    // 컴포넌트 언마운트 시 인터벌 정리 (메모리 누수 방지)
     return () => clearInterval(interval)
   }, [userName])
 

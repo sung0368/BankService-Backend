@@ -40,7 +40,13 @@ client.interceptors.request.use((config) => {
  *   5. refresh도 실패 → localStorage 초기화 + /login 이동
  */
 client.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const duration = parseInt(localStorage.getItem('accessDuration') || '0', 10)
+    if (duration > 0) {
+      localStorage.setItem('accessExpiresAt', String(Date.now() + duration * 1000))
+    }
+    return response
+  },
   async (error) => {
     const originalRequest = error.config
 
@@ -53,11 +59,15 @@ client.interceptors.response.use(
         const newAccessToken = res.data.accessToken
 
         localStorage.setItem('accessToken', newAccessToken)
+        localStorage.setItem('accessExpiresAt', String(Date.now() + res.data.expiresIn * 1000))
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
         return client(originalRequest)
       } catch (refreshError) {
         localStorage.removeItem('accessToken')
         localStorage.removeItem('refreshToken')
+        localStorage.removeItem('userName')
+        localStorage.removeItem('accessDuration')
+        localStorage.removeItem('accessExpiresAt')
         window.location.href = '/login'
         return Promise.reject(refreshError)
       }
