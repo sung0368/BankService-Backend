@@ -16,9 +16,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-// [리팩토링] 계좌이체 서비스 신규 추가
+// 계좌이체 서비스 신규 추가
 // - 거래 상태 흐름: INIT → DEBIT_OK → CREDIT_OK → SUCCESS (실패 시 FAIL)
-// - @Version 낙관적 잠금으로 동시 이체 시 잔액 정합성 보장
+// - 비관적 잠금(PESSIMISTIC_WRITE)으로 동시 이체 시 잔액 정합성 보장
 // - AccountHistory로 잔액 변경 이력 기록
 @Service
 @Transactional
@@ -35,7 +35,7 @@ public class TransferService {
 
     public Transaction transfer(String userId, String fromAccountNumber, String toAccountNumber, Long amount, String pin) {
 
-        // 1. 출금 계좌 확인 (본인 소유)
+        // 1. 출금/입금 계좌 조회 (잠금 없이 먼저 존재 확인)
         Account fromAccount = accountRepository.findByAccountNumberAndUserId(fromAccountNumber, userId)
                 .orElseThrow(() -> new RuntimeException("출금 계좌를 찾을 수 없습니다."));
 
@@ -58,7 +58,17 @@ public class TransferService {
             throw new RuntimeException("같은 계좌로는 이체할 수 없습니다.");
         }
 
-        // 4. 잔액 확인
+        // 4. 데드락 방지: 항상 ID가 작은 계좌부터 잠금 (잠금 순서 일관성)
+        Account firstLock  = fromAccount.getId() < toAccount.getId() ? fromAccount : toAccount;
+        Account secondLock = fromAccount.getId() < toAccount.getId() ? toAccount : fromAccount;
+        accountRepository.findByAccountNumberWithLock(firstLock.getAccountNumber());
+        accountRepository.findByAccountNumberWithLock(secondLock.getAccountNumber());
+
+        // 잠금 후 최신 잔액 재조회
+        fromAccount = accountRepository.findByAccountNumberAndUserId(fromAccountNumber, userId).orElseThrow();
+        toAccount   = accountRepository.findByAccountNumber(toAccountNumber).orElseThrow();
+
+        // 5. 잔액 확인
         if (fromAccount.getBalance() < amount) {
             throw new RuntimeException("잔액이 부족합니다.");
         }
