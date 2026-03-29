@@ -4,7 +4,6 @@ import com.bankservice.user.UserSignupException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -55,19 +54,6 @@ public class GlobalExceptionHandler {
         }
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
-    }
-
-    /**
-     * 동시 이체 충돌 시 처리
-     * - @Version 낙관적 잠금이 충돌을 감지하면 ObjectOptimisticLockingFailureException 발생
-     * - RuntimeException보다 구체적인 타입이므로 이 핸들러가 먼저 실행됨
-     * - 409 Conflict로 응답해 클라이언트가 재시도하도록 유도
-     */
-    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
-    public ResponseEntity<Map<String, String>> handleOptimisticLock(ObjectOptimisticLockingFailureException ex) {
-        log.warn("낙관적 잠금 충돌: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(Map.of("message", "동시에 처리 중인 요청이 있습니다. 잠시 후 다시 시도해주세요."));
     }
 
     /**

@@ -31,10 +31,6 @@ public class Account {
     @Column(name = "상태", nullable = false)
     private String status = "NORMAL";
 
-    @Version
-    @Column(name = "버전", nullable = false)
-    private Integer version = 0;
-
     @Column(name = "생성일시")
     private LocalDateTime createdAt = LocalDateTime.now();
 
