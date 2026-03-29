@@ -8,7 +8,7 @@ export default function Transfer() {
   const [accounts, setAccounts] = useState([])
   const [form, setForm] = useState({
     fromAccountNumber: '',
-    bank: '우리은행',
+    bank: '365은행',
     recipient: '',
     toAccountNumber: '',
     amount: '',
@@ -103,6 +103,7 @@ export default function Transfer() {
             <div style={s.field}>
               <label style={s.label}>입금은행</label>
               <select style={s.select} value={form.bank} onChange={set('bank')}>
+                <option>365은행</option>
                 <option>우리은행</option>
                 <option>국민은행</option>
                 <option>신한은행</option>

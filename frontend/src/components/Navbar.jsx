@@ -64,6 +64,12 @@ export default function Navbar() {
     <div style={s.navbar}>
       <div style={s.navbarInner}>
 
+        {/* 로고 */}
+        <a href="/home" style={s.logo} onClick={(e) => { e.preventDefault(); navigate('/home') }}>
+          <span style={s.logo365}>365</span>
+          <span style={s.logoBank}>은행</span>
+        </a>
+
         {/* 메가 메뉴 */}
         <div style={s.navGroup} className="nav-group">
           <div style={s.navLeft}>
@@ -129,7 +135,10 @@ export default function Navbar() {
 
 const s = {
   navbar: { background: '#003366', padding: '16px 24px', position: 'relative', zIndex: 1000 },
-  navbarInner: { maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center' },
+  navbarInner: { maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '24px' },
+  logo: { textDecoration: 'none', display: 'flex', alignItems: 'baseline', gap: '4px', flexShrink: 0, marginRight: '16px' },
+  logo365: { color: 'white', fontSize: '22px', fontWeight: '900', textShadow: '2px 2px 4px rgba(0,0,0,0.5)' },
+  logoBank: { color: 'white', fontSize: '22px', fontWeight: '700', textShadow: '2px 2px 4px rgba(0,0,0,0.5)' },
   navGroup: {},
   navLeft: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', textAlign: 'center' },
   navLink: { color: 'white', textDecoration: 'none', fontSize: '18px', fontWeight: '800', padding: '12px 0', display: 'block' },

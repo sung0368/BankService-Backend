@@ -5,11 +5,14 @@ import com.bankservice.user.UserProfile;
 import com.bankservice.user.UserProfileRepository;
 import com.bankservice.user.UserRepository;
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +20,6 @@ import java.util.UUID;
 
 @Service
 @Transactional
-@RequiredArgsConstructor
 public class AccountService {
 
     private final AccountRepository accountRepository;
@@ -26,6 +28,23 @@ public class AccountService {
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
     private final PinVerifier pinVerifier;
+    private final SecretKeySpec secretKey;
+
+    public AccountService(AccountRepository accountRepository,
+                          AccountAuthRepository accountAuthRepository,
+                          BCryptPasswordEncoder encoder,
+                          UserRepository userRepository,
+                          UserProfileRepository userProfileRepository,
+                          PinVerifier pinVerifier,
+                          @Value("${crypto.secret-key}") String key) {
+        this.accountRepository = accountRepository;
+        this.accountAuthRepository = accountAuthRepository;
+        this.encoder = encoder;
+        this.userRepository = userRepository;
+        this.userProfileRepository = userProfileRepository;
+        this.pinVerifier = pinVerifier;
+        this.secretKey = new SecretKeySpec(key.getBytes(), "AES");
+    }
 
     /**
      * [리팩토링] 계좌 개설 시 계좌 비밀번호(PIN) 해싱 추가
@@ -103,7 +122,7 @@ public class AccountService {
         if (!profile.getName().equals(name)) {
             errors.put("name", "이름이 일치하지 않습니다.");
         }
-        if (!profile.getResidentNumberEncrypted().equals(ssn)) {
+        if (!profile.getResidentNumberEncrypted().equals(encrypt(ssn))) {
             errors.put("ssn", "주민등록번호가 일치하지 않습니다.");
         }
         if (!profile.getPhone().equals(phone)) {
@@ -111,6 +130,16 @@ public class AccountService {
         }
 
         return errors;
+    }
+
+    private String encrypt(String value) {
+        try {
+            Cipher cipher = Cipher.getInstance("AES");
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+            return Base64.getEncoder().encodeToString(cipher.doFinal(value.getBytes()));
+        } catch (Exception e) {
+            throw new RuntimeException("암호화 실패", e);
+        }
     }
 
     private String generateAccountNumber() {

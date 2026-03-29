@@ -2,8 +2,13 @@ package com.bankservice.user;
 
 import com.bankservice.auth.dto.SignupRequest;
 import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
+import java.util.Base64;
 
 @Service
 @Transactional
@@ -12,14 +17,17 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
     private final BCryptPasswordEncoder encoder;
+    private final SecretKeySpec secretKey;
 
 
     public UserService(UserRepository userRepository,
                        UserProfileRepository userProfileRepository,
-                       BCryptPasswordEncoder encoder) {
+                       BCryptPasswordEncoder encoder,
+                       @Value("${crypto.secret-key}") String key) {
         this.userRepository = userRepository;
         this.userProfileRepository = userProfileRepository;
         this.encoder = encoder;
+        this.secretKey = new SecretKeySpec(key.getBytes(), "AES");
     }
 
     public boolean existsByUserId(String userId) {
@@ -67,8 +75,13 @@ public class UserService {
         System.out.println("🔥 signup() 완료");
     }
 
-    // 🔹 지금은 더미 (나중에 AES로 교체)
     private String encrypt(String value) {
-        return value;
+        try {
+            Cipher cipher = Cipher.getInstance("AES");
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+            return Base64.getEncoder().encodeToString(cipher.doFinal(value.getBytes()));
+        } catch (Exception e) {
+            throw new RuntimeException("암호화 실패", e);
+        }
     }
 }
