@@ -120,36 +120,36 @@ npm run dev
 
 ### 🔐 인증 `/api/auth`
 
-| Method | Endpoint | 설명 | 인증 필요 |
-|--------|----------|------|-----------|
-| POST | `/api/auth/login` | 로그인 (AccessToken + RefreshToken 발급) | No |
-| POST | `/api/auth/refresh` | AccessToken 갱신 | No |
-| POST | `/api/auth/logout` | 로그아웃 (RefreshToken 무효화) | No |
-| GET | `/api/auth/token/ttl` | RefreshToken 잔여 유효시간 조회 | No |
+| Method | Endpoint | 설명 |
+|--------|----------|------|
+| POST | `/api/auth/login` | 로그인 (AccessToken + RefreshToken 발급) |
+| POST | `/api/auth/refresh` | AccessToken 갱신 |
+| POST | `/api/auth/logout` | 로그아웃 (RefreshToken 무효화) |
+| GET | `/api/auth/token/ttl` | RefreshToken 잔여 유효시간 조회 |
 
 ### 👤 회원 `/api/users`
 
-| Method | Endpoint | 설명 | 인증 필요 |
-|--------|----------|------|-----------|
-| POST | `/api/users` | 회원가입 | No |
+| Method | Endpoint | 설명 |
+|--------|----------|------|
+| POST | `/api/users` | 회원가입 |
 
 ### 💳 계좌 `/api/accounts`
 
-| Method | Endpoint | 설명 | 인증 필요 |
-|--------|----------|------|-----------|
-| GET | `/api/accounts` | 내 계좌 목록 조회 | Yes |
-| POST | `/api/accounts` | 계좌 개설 | Yes |
-| PATCH | `/api/accounts/{accountNumber}/pin` | PIN 변경 | Yes |
-| PATCH | `/api/accounts/{accountNumber}/close` | 계좌 해지 | Yes |
-| POST | `/api/accounts/verify-identity` | 본인 인증 (이름, 주민번호, 전화번호) | Yes |
+| Method | Endpoint | 설명 |
+|--------|----------|------|
+| GET | `/api/accounts` | 내 계좌 목록 조회 |
+| POST | `/api/accounts` | 계좌 개설 |
+| PATCH | `/api/accounts/{accountNumber}/pin` | PIN 변경 |
+| PATCH | `/api/accounts/{accountNumber}/close` | 계좌 해지 |
+| POST | `/api/accounts/verify-identity` | 본인 인증 (이름, 주민번호, 전화번호) |
 
 ### 💸 이체 `/api/transfer`
 
-| Method | Endpoint | 설명 | 인증 필요 |
-|--------|----------|------|-----------|
-| POST | `/api/transfer` | 계좌이체 | Yes |
-| GET | `/api/transfer/history` | 특정 계좌의 월별 거래내역 | Yes |
-| GET | `/api/transfer/all-history` | 내 모든 계좌 거래내역 | Yes |
+| Method | Endpoint | 설명 |
+|--------|----------|------|
+| POST | `/api/transfer` | 계좌이체 |
+| GET | `/api/transfer/history` | 특정 계좌의 월별 거래내역 |
+| GET | `/api/transfer/all-history` | 내 모든 계좌 거래내역 |
 
 ## 🔄 인증 흐름
 
