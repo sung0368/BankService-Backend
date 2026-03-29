@@ -171,7 +171,7 @@ AccessToken 만료 시
 - RefreshToken은 httpOnly 쿠키로 전달 (XSS 방지)
 - Redis에 RefreshToken 저장으로 서버 측 로그아웃 지원
 - Pessimistic Locking으로 동시 이체 시 데이터 정합성 보장
-- 주민등록번호는 암호화 저장 (AES, 추후 적용 예정)
+- 주민등록번호는 암호화 저장 (AES)
 
 ## 환경 변수 (application.properties 주요 설정)
 
